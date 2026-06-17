@@ -1231,12 +1231,68 @@ function uninstall(ctx) {
   ok('per-repo init files (.cursor/, .windsurf/, AGENTS.md) — remove with your editor');
 }
 
-// ── Interactive mini TUI (TTY-only) ───────────────────────────────────────
+// ── Interactive mini TUI (TTY-only, or /dev/tty when stdin is piped) ─────────
+//
+// When running normally (stdin is a TTY): uses process.stdin / process.stdout.
+//
+// When stdin is piped (e.g. `curl | bash`): the user's terminal is still
+// accessible via the controlling terminal device (/dev/tty on POSIX). We open
+// that device for both input and output so the chooser works even though stdin
+// is occupied by the pipe. The env var CAVEMAN_TTY_DEVICE overrides the device
+// path, allowing tests to control the fallback behaviour:
+//   ''              → skip /dev/tty attempt (exit with instructions)
+//   '/dev/null'     → opened but not a real TTY → fall back to instructions
+//   '/dev/tty'      → default (real controlling terminal)
 async function promptForOnly(providers, detectedIds, alreadySelected = new Set()) {
-  if (!process.stdin.isTTY || !process.stdout.isTTY) return null;
   if (!providers.length) return null;
 
-  const wasRaw = !!process.stdin.isRaw;
+  let inputStream = process.stdin;
+  let outputStream = process.stdout;
+  let closeTty = null; // called in cleanup() to release the /dev/tty fd
+
+  const stdinIsTTY = !!process.stdin.isTTY;
+  const stdoutIsTTY = !!process.stdout.isTTY;
+
+  if (!stdinIsTTY || !stdoutIsTTY) {
+    // stdin is piped — try the controlling terminal device.
+    if (process.platform === 'win32') return null; // no /dev/tty on Windows
+
+    // CAVEMAN_TTY_DEVICE controls which device to try (testability hook).
+    // Undefined → use '/dev/tty'. Empty string → disabled.
+    const ttyDevice = 'CAVEMAN_TTY_DEVICE' in process.env
+      ? process.env.CAVEMAN_TTY_DEVICE
+      : '/dev/tty';
+
+    if (!ttyDevice) return null; // explicitly disabled
+
+    try {
+      const ttyModule = require('tty');
+      // O_RDWR opens for both read and write; O_NOCTTY avoids making this
+      // process a new session leader for the terminal.
+      const fd = fs.openSync(ttyDevice, fs.constants.O_RDWR | fs.constants.O_NOCTTY);
+      const ttyIn = new ttyModule.ReadStream(fd);
+      const ttyOut = new ttyModule.WriteStream(fd);
+
+      if (typeof ttyIn.setRawMode !== 'function') {
+        // Opened successfully but the fd is not a real TTY (e.g. /dev/null).
+        ttyIn.destroy();
+        ttyOut.destroy();
+        return null;
+      }
+
+      inputStream = ttyIn;
+      outputStream = ttyOut;
+      closeTty = () => {
+        try { ttyIn.destroy(); } catch {}
+        try { ttyOut.destroy(); } catch {}
+      };
+    } catch {
+      // Device not found, permission denied, ENXIO (no controlling terminal), etc.
+      return null;
+    }
+  }
+
+  const wasRaw = !!inputStream.isRaw;
   const alreadySelectedSet = alreadySelected instanceof Set ? alreadySelected : new Set(alreadySelected || []);
   const selected = new Set();
   for (const p of providers) {
@@ -1250,7 +1306,7 @@ async function promptForOnly(providers, detectedIds, alreadySelected = new Set()
 
   function render() {
     if (linesWritten > 0) {
-      process.stdout.write(`\x1b[${linesWritten}A\x1b[G`);
+      outputStream.write(`\x1b[${linesWritten}A\x1b[G`);
     }
 
     let output = '';
@@ -1276,30 +1332,40 @@ async function promptForOnly(providers, detectedIds, alreadySelected = new Set()
     }
     output += '\n';
 
-    process.stdout.write(output);
+    outputStream.write(output);
     linesWritten = output.split('\n').length - 1;
   }
 
   // Hide cursor and clear any partial lines
-  process.stdout.write('\x1b[?25l');
+  outputStream.write('\x1b[?25l');
 
-  if (typeof process.stdin.setRawMode === 'function') {
-    process.stdin.setRawMode(true);
+  if (typeof inputStream.setRawMode === 'function') {
+    inputStream.setRawMode(true);
   }
-  process.stdin.resume();
-  readline.emitKeypressEvents(process.stdin);
+  inputStream.resume();
+  readline.emitKeypressEvents(inputStream);
 
   render();
 
   return new Promise((resolve) => {
     function cleanup() {
-      process.stdout.write('\x1b[?25h');
-      if (typeof process.stdin.setRawMode === 'function') {
-        process.stdin.setRawMode(wasRaw);
+      outputStream.write('\x1b[?25h');
+      if (typeof inputStream.setRawMode === 'function') {
+        inputStream.setRawMode(wasRaw);
       }
-      process.stdin.removeListener('keypress', onKeypress);
-      process.stdin.pause();
+      inputStream.removeListener('keypress', onKeypress);
+      inputStream.pause();
+      if (closeTty) closeTty();
     }
+
+    // Restore terminal state on unclean exits (SIGTERM from test runner timeout,
+    // kill, etc.) so the controlling terminal is not left in raw mode.
+    function onSignal() {
+      cleanup();
+      process.exit(0);
+    }
+    process.once('SIGTERM', onSignal);
+    process.once('SIGHUP', onSignal);
 
     function onKeypress(str, key) {
       const keyName = key ? key.name : undefined;
@@ -1307,12 +1373,16 @@ async function promptForOnly(providers, detectedIds, alreadySelected = new Set()
 
       // Handle Ctrl+C
       if (keyCtrl && keyName === 'c') {
+        process.removeListener('SIGTERM', onSignal);
+        process.removeListener('SIGHUP', onSignal);
         cleanup();
         process.exit(0);
       }
 
       // Handle q, Escape
       if (str === 'q' || str === 'Q' || keyName === 'escape') {
+        process.removeListener('SIGTERM', onSignal);
+        process.removeListener('SIGHUP', onSignal);
         cleanup();
         process.exit(0);
       }
@@ -1339,12 +1409,14 @@ async function promptForOnly(providers, detectedIds, alreadySelected = new Set()
       }
       // Confirmation: Enter
       else if (keyName === 'return' || keyName === 'enter' || str === '\r' || str === '\n') {
+        process.removeListener('SIGTERM', onSignal);
+        process.removeListener('SIGHUP', onSignal);
         cleanup();
         resolve(Array.from(selected));
       }
     }
 
-    process.stdin.on('keypress', onKeypress);
+    inputStream.on('keypress', onKeypress);
   });
 }
 
@@ -1368,7 +1440,13 @@ function pad(s, n) { s = String(s); return s + ' '.repeat(Math.max(0, n - s.leng
 
 // ── Help ───────────────────────────────────────────────────────────────────
 function printHelp() {
-  process.stdout.write(`caveman installer — detects your agents and installs caveman for each one.
+  process.stdout.write(`caveman installer — opens an agent chooser TUI, then installs for each picked agent.
+
+  Default (terminal): detects installed agents, pre-selects them in a chooser,
+  installs only after you confirm. No agents are installed without your say-so.
+  Non-interactive (CI / curl|bash with no TTY): use --only <agent> to skip the
+  chooser and install directly. --with-init / --all also run without a TTY.
+  Without --only (or --with-init / --all), the installer exits with instructions.
 
 USAGE
   npx -y github:Karnonson/caveman -- [flags]
@@ -1379,7 +1457,9 @@ USAGE
 FLAGS
   --dry-run             Print what would run, do nothing.
   --force               Re-run even if a target reports already installed.
-  --only <agent>        Install only for the named agent. Repeatable.
+  --only <agent>        Skip the chooser; install only for the named agent.
+                        Repeatable. Sufficient for non-interactive/no-TTY use;
+                        --with-init and --all also work without a TTY.
                         See --list for valid ids.
   --skip-skills         Don't run the generic .agents/skills fallback
                         (direct copy into ./.agents/skills).
@@ -1403,13 +1483,16 @@ FLAGS
                         scope \`claude plugin install\`, \`gemini extensions
                         install\`, opencode (XDG_CONFIG_HOME), or openclaw
                         (OPENCLAW_WORKSPACE) — those use their own paths.
-  --non-interactive     Never prompt; use defaults. (Auto when stdin is not a TTY.)
+  --non-interactive     Never prompt; requires --only, --with-init, or --all to
+                        install. Without one of those, exits with instructions.
+                        (Auto-set when stdin is not a TTY.)
   --list                Print provider matrix and exit.
   --no-color            Disable ANSI colors.
   -h, --help            Show this help.
 
 EXAMPLES
-  npx -y github:Karnonson/caveman                        # default install
+  npx -y github:Karnonson/caveman                        # opens chooser TUI
+  npx -y github:Karnonson/caveman -- --only claude       # skip chooser, install Claude Code
   npx -y github:Karnonson/caveman -- --all               # all the trimmings
   npx -y github:Karnonson/caveman -- --only claude --no-mcp-shrink
   npx -y github:Karnonson/caveman -- --uninstall
@@ -1452,12 +1535,39 @@ async function main() {
   const detectedIds = new Set(detected.map(p => p.id));
 
   // TTY-only mini TUI when no --only and no --non-interactive.
+  // promptForOnly returns null if no usable terminal was found, [] if TUI ran
+  // and user confirmed with nothing selected, or a non-empty array of picks.
+  let tuiWasShown = false;
   if (opts.only.length === 0 && !opts.nonInteractive) {
     const picks = await promptForOnly(PROVIDERS, detectedIds);
+    tuiWasShown = picks !== null; // null = no terminal, array = TUI ran (even if empty)
     if (picks && picks.length) opts.only = picks;
   }
 
-  const want = (id) => opts.only.length === 0 || opts.only.includes(id);
+  // Guard: if still no agents selected after the TUI (or we're non-interactive / no TTY),
+  // skip agent installs and exit with instructions — unless the user explicitly
+  // requested standalone work (--with-init / --all) that is independent of agent
+  // selection. The old "auto-install all detected" default is intentionally removed
+  // here — it silently clobbered agent configs when the dev machine happened to have
+  // VS Code extensions installed (issue #500-class). Require explicit selection.
+  if (opts.only.length === 0) {
+    if (tuiWasShown) {
+      // User opened the TUI and confirmed with nothing selected — exit cleanly.
+      process.stdout.write('  no agents selected — nothing installed.\n');
+    } else {
+      // Non-interactive or no usable terminal: give instructions.
+      process.stdout.write('caveman: no agents selected.\n');
+      process.stdout.write('  pass --only <agent> to install for a specific agent (see --list for ids),\n');
+      process.stdout.write('  or run from an interactive terminal to use the chooser.\n');
+    }
+    // If --with-init (or --all) was explicitly requested, fall through to the
+    // per-repo init block below rather than exiting immediately.
+    if (!opts.withInit) return 0;
+  }
+
+  // want() is intentionally strict: only agents named via --only are wanted.
+  // When opts.only is empty (--with-init-only path above) no agents are wanted.
+  const want = (id) => opts.only.includes(id);
   const explicit = (id) => opts.only.includes(id);
 
   // Run installs in declared order. Soft providers (no reliable detect probe)
@@ -1484,7 +1594,10 @@ async function main() {
   // Generic fallback if nothing matched: copy the bundled skills into
   // ./.agents/skills. This avoids broad auto-detection writing into unrelated
   // agent dirs (e.g. .continue/skills) when intent is ambiguous.
-  if (!opts.skipSkills && opts.only.length === 0 && ctx.results.detected === 0) {
+  // Only applies when agents were actually requested (opts.only non-empty) but
+  // none were recognised — the --with-init-only path (opts.only empty) has
+  // already returned or falls through intentionally with zero agent installs.
+  if (!opts.skipSkills && opts.only.length > 0 && ctx.results.detected === 0) {
     installUniversal(ctx, '→ no known agents detected — installing generic .agents/skills profile (universal)');
   }
 

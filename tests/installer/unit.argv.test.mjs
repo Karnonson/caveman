@@ -179,6 +179,16 @@ test('--all does NOT auto-enable mcp-shrink (no sensible default upstream)', () 
   assert.doesNotMatch(r.stdout, /wiring caveman-shrink MCP proxy/);
 });
 
+test('--only bypasses the interactive chooser TUI', () => {
+  // When --only is given, the installer must skip the chooser entirely — no TUI
+  // prompt text, no "no agents selected" exit message.
+  const r = run('--dry-run', '--only', 'claude', '--non-interactive');
+  assert.equal(r.status, 0);
+  assert.doesNotMatch(r.stdout, /Agent selection/i);
+  assert.doesNotMatch(r.stdout, /Use Up\/Down/i);
+  assert.doesNotMatch(r.stdout, /no agents selected/i);
+});
+
 test('--help discloses --config-dir scope', () => {
   const r = run('--help');
   assert.equal(r.status, 0);
@@ -188,4 +198,25 @@ test('--help discloses --config-dir scope', () => {
   assert.match(collapsed, /Does NOT scope/);
   assert.match(collapsed, /XDG_CONFIG_HOME/);
   assert.match(collapsed, /OPENCLAW_WORKSPACE/);
+});
+
+test('--help describes chooser TUI as the default interactive experience', () => {
+  // The default install (no --only, terminal present) must open the chooser
+  // TUI — not silently auto-install everything detected. Help text must make
+  // this clear so users know what to expect.
+  const r = run('--help');
+  assert.equal(r.status, 0);
+  const collapsed = r.stdout.replace(/\s+/g, ' ');
+  assert.match(collapsed, /chooser|select.*agent|pick.*agent/i);
+});
+
+test('--help explains --only is required for non-interactive / no-terminal use', () => {
+  // Non-interactive users (CI, curl|bash with CAVEMAN_TTY_DEVICE='', etc.)
+  // get no chooser and no auto-install — they must pass --only explicitly.
+  // The help text for --non-interactive must say so.
+  const r = run('--help');
+  assert.equal(r.status, 0);
+  const collapsed = r.stdout.replace(/\s+/g, ' ');
+  // --non-interactive description must mention --only (not "use defaults")
+  assert.match(collapsed, /--non-interactive[^.]+--only/);
 });

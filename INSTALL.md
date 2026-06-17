@@ -22,10 +22,13 @@ irm https://raw.githubusercontent.com/Karnonson/caveman/main/install.ps1 | iex
 
 What it does:
 
-- Auto-detects every supported agent installed on your machine (Claude Code, Cursor, Codex, etc.).
-- For each one, runs that agent's native install path (plugin / extension / rule file / `npx skills add`).
+- Opens an interactive chooser TUI — detected agents are pre-selected, but nothing installs until you confirm.
+- For each agent you pick, runs that agent's native install path (plugin / extension / rule file / `npx skills add`).
 - Wires Claude Code hooks and statusline badge on top. (`caveman-shrink` MCP middleware is opt-in via `--with-mcp-shrink` — see flag table below.)
-- Skips anything you don't have. Safe to re-run. ~30 seconds end-to-end.
+- Skips anything you didn't pick. Safe to re-run. ~30 seconds end-to-end.
+
+**No controlling terminal (CI, headless container, `CAVEMAN_TTY_DEVICE=''`)?** Pass `--only <agent>` to skip the chooser and install directly. Running `curl | bash` from an ordinary terminal still opens the chooser via `/dev/tty`.
+The installer never auto-installs without either the chooser confirmation or an explicit `--only`.
 
 Want to preview before installing? Use `--dry-run`:
 

@@ -91,7 +91,11 @@ curl -fsSL https://raw.githubusercontent.com/Karnonson/caveman/main/install.sh |
 irm https://raw.githubusercontent.com/Karnonson/caveman/main/install.ps1 | iex
 ```
 
-~30 seconds. Needs Node ≥18. Skip agent you no have. Safe to re-run.
+~30 seconds. Needs Node ≥18. Safe to re-run.
+
+Installer open chooser TUI. Pick agents. Confirm. Only selected agents get caveman — nothing install without your say-so. Detected agents pre-selected for you.
+
+No controlling terminal (CI, headless container)? Pass `--only <agent>` instead — skip chooser, install direct. Piped from a real terminal? Chooser opens via `/dev/tty` as normal.
 
 **Trigger:** type `/caveman` or say "talk like caveman". Stop with "normal mode".
 
