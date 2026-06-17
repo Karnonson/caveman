@@ -37,8 +37,11 @@ fi
 # If we're inside the repo clone, run the local installer directly — saves
 # the npx round-trip and keeps offline installs working. BASH_SOURCE is unset
 # when bash is invoked from stdin (curl | bash), and `set -u` would trip on a
-# bare reference — default to empty so the curl-pipe path falls through cleanly.
-here="$(cd "$(dirname "${BASH_SOURCE[0]:-}")" 2>/dev/null && pwd)" || here=""
+# bare reference — check explicitly before resolving.
+here=""
+if [ -n "${BASH_SOURCE[0]:-}" ] && [ -f "${BASH_SOURCE[0]}" ]; then
+  here="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || here=""
+fi
 if [ -n "$here" ] && [ -f "$here/bin/install.js" ]; then
   exec node "$here/bin/install.js" "$@"
 fi
