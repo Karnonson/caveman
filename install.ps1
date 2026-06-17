@@ -41,9 +41,12 @@ if ($nodeMajor -lt 18) {
 }
 
 # If we're inside the repo clone, run the local installer directly.
-$here = Split-Path -Parent $MyInvocation.MyCommand.Path
-$local = Join-Path $here "bin/install.js"
-if (Test-Path $local) {
+$here = $null
+if ($MyInvocation.MyCommand.Path) {
+  $here = Split-Path -Parent $MyInvocation.MyCommand.Path
+}
+if ($here -and (Test-Path (Join-Path $here "bin/install.js"))) {
+  $local = Join-Path $here "bin/install.js"
   & node $local @InstallerArgs
   exit $LASTEXITCODE
 }
