@@ -5,8 +5,8 @@
 # you'd pass to bin/install.js can be passed here; we just forward them.
 #
 # One-line install:
-#   curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
-#   curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash -s -- --all
+#   curl -fsSL https://raw.githubusercontent.com/Karnonson/caveman/main/install.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/Karnonson/caveman/main/install.sh | bash -s -- --all
 #
 # Local clone:
 #   bash install.sh [flags]
@@ -17,7 +17,7 @@
 
 set -euo pipefail
 
-REPO="JuliusBrussee/caveman"
+REPO="Karnonson/caveman"
 
 # Require Node ≥18. nvm is a common path; print a hint if missing.
 if ! command -v node >/dev/null 2>&1; then

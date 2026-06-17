@@ -28,8 +28,10 @@ try {
 $Mode = $Mode.ToLowerInvariant()
 $Mode = ($Mode -replace '[^a-z0-9-]', '')
 
-$Valid = @('off','lite','full','ultra','super-compress','silence','commit','review','compress')
+$Valid = @('off','lite','full','ultra','supra','super-compress','silence','commit','review','compress')
 if (-not ($Valid -contains $Mode)) { exit 0 }
+
+if ($Mode -eq 'super-compress') { $Mode = 'supra' }
 
 $Esc = [char]27
 if ([string]::IsNullOrEmpty($Mode) -or $Mode -eq "full") {

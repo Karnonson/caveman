@@ -17,8 +17,8 @@ If you installed caveman standalone (without the plugin), the unified Node insta
 
 - Fires on every user prompt, checks for `/caveman` commands and natural-language activation/deactivation phrases ("talk like caveman", "stop caveman", "normal mode")
 - Writes the active mode to the flag file when a caveman command is detected; deletes it on deactivation
-- Emits a small per-turn reinforcement reminder when the flag is set to a non-independent mode (`lite`/`full`/`ultra`/`super-compress`/`silence`)
-- Supports: `lite`, `full`, `ultra`, `super-compress`, `silence`, `commit`, `review`, `compress`
+- Emits a small per-turn reinforcement reminder when the flag is set to a non-independent mode (`lite`/`full`/`ultra`/`supra`/`silence`)
+- Supports: `lite`, `full`, `ultra`, `supra` (legacy alias: `super-compress`), `silence`, `commit`, `review`, `compress`
 
 ### `caveman-statusline.sh` / `caveman-statusline.ps1` — Statusline badge script
 
@@ -77,7 +77,7 @@ fi
 Badge examples:
 - `/caveman` → `[CAVEMAN]`
 - `/caveman ultra` → `[CAVEMAN:ULTRA]`
-- `/caveman super-compress` → `[CAVEMAN:SUPER-COMPRESS]`
+- `/caveman supra` (or legacy `/caveman super-compress`) → `[CAVEMAN:SUPRA]`
 - `/caveman-commit` → `[CAVEMAN:COMMIT]`
 - `/caveman-review` → `[CAVEMAN:REVIEW]`
 

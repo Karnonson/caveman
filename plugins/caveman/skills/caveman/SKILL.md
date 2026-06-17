@@ -3,7 +3,7 @@ name: caveman
 description: >
   Ultra-compressed communication mode. Cuts token usage ~75% by speaking like caveman
   while keeping full technical accuracy. Supports intensity levels: lite, full, ultra (default),
-  super-compress, silence.
+  supra (legacy alias: super-compress), silence.
   Use when user says "caveman mode", "talk like caveman", "use caveman", "less tokens",
   "be brief", or invokes /caveman. Also auto-triggers when token efficiency is requested.
 ---
@@ -36,21 +36,21 @@ Yes: "Bug in auth middleware. Token expiry check use `<` not `<=`. Fix:"
 | **lite** | No filler/hedging. Keep articles + full sentences. Professional but tight |
 | **full** | Drop articles, fragments OK, short synonyms. Classic caveman. No tool-call narration, no decorative tables/emoji, no long raw error-log dumps unless asked. Standard acronyms OK; no invented abbreviations |
 | **ultra** | Abbreviate prose words (DB/auth/config/req/res/fn/impl) — prose words only, never real code symbols/function names. Strip conjunctions, arrows for causality (X → Y), one word when one word enough. Code symbols, function names, API names, error strings: never abbreviate |
-| **super-compress** | Aggressive compression past ultra. Keep technical detail exact, strip most connective tissue, collapse repeats, and prefer safe symbols in prose (`+`, `->`, `=`, `&`) when they reduce tokens without ambiguity. Never abbreviate or mutate real code symbols/function names/API names/error strings |
+| **supra** | Aggressive compression past ultra. Keep technical detail exact, strip most connective tissue, collapse repeats, and prefer safe symbols in prose (`+`, `->`, `=`, `&`) when they reduce tokens without ambiguity. Never abbreviate or mutate real code symbols/function names/API names/error strings |
 | **silence** | Minimum viable answer. Output only decisive content: blocker, required question, safety warning, or final result. One fragment or one line if enough. If ambiguity or safety risk appears, fall back to clear prose |
 
 Example — "Why React component re-render?"
 - lite: "Your component re-renders because you create a new object reference each render. Wrap it in `useMemo`."
 - full: "New object ref each render. Inline object prop = new ref = re-render. Wrap in `useMemo`."
 - ultra: "Inline obj prop → new ref → re-render. `useMemo`."
-- super-compress: "New object ref each render. Inline prop = new ref = re-render. `useMemo`."
+- supra: "New object ref each render. Inline prop = new ref = re-render. `useMemo`."
 - silence: "New ref each render. `useMemo`."
 
 Example — "Explain database connection pooling."
 - lite: "Connection pooling reuses open connections instead of creating new ones per request. Avoids repeated handshake overhead."
 - full: "Pool reuse open DB connections. No new connection per request. Skip handshake overhead."
 - ultra: "Pool = reuse DB conn. Skip handshake → fast under load."
-- super-compress: "Pool reuse open conn. No per-req connect. Skip handshake overhead."
+- supra: "Pool reuse open conn. No per-req connect. Skip handshake overhead."
 - silence: "Pool reuse conn. Skip handshake."
 
 ### Silence Final Summary Contract (Internal Validation)

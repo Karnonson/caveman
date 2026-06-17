@@ -21,9 +21,15 @@ const os = require('os');
 
 const VALID_MODES = [
   'off', 'lite', 'full', 'ultra',
-  'super-compress', 'silence',
+  'supra', 'super-compress', 'silence',
   'commit', 'review', 'compress'
 ];
+
+function normalizeMode(mode) {
+  const raw = String(mode || '').trim().toLowerCase();
+  if (raw === 'super-compress') return 'supra';
+  return raw;
+}
 
 function getConfigDir() {
   if (process.env.XDG_CONFIG_HOME) {
@@ -77,9 +83,9 @@ function readModeFromConfigFile(configPath) {
   try {
     const raw = fs.readFileSync(configPath, 'utf8');
     const config = JSON.parse(raw);
-    if (config && config.defaultMode &&
-        VALID_MODES.includes(String(config.defaultMode).toLowerCase())) {
-      return String(config.defaultMode).toLowerCase();
+    const normalized = normalizeMode(config && config.defaultMode);
+    if (normalized && VALID_MODES.includes(normalized)) {
+      return normalized;
     }
   } catch (e) {
     // Missing / unreadable / invalid JSON → caller falls through
@@ -89,9 +95,9 @@ function readModeFromConfigFile(configPath) {
 
 function getDefaultMode() {
   // 1. Environment variable (highest priority)
-  const envMode = process.env.CAVEMAN_DEFAULT_MODE;
-  if (envMode && VALID_MODES.includes(envMode.toLowerCase())) {
-    return envMode.toLowerCase();
+  const envMode = normalizeMode(process.env.CAVEMAN_DEFAULT_MODE);
+  if (envMode && VALID_MODES.includes(envMode)) {
+    return envMode;
   }
 
   // 2. Repo-local config (checked-in, per-project default)
@@ -204,8 +210,8 @@ function safeWriteFlag(flagPath, content) {
 // reader — statusline, per-turn reinforcement — would slurp that content and
 // either echo it to the terminal or inject it into model context.
 //
-// MAX_FLAG_BYTES is a hard cap. The longest legitimate value is
-// "super-compress" (14 bytes); 64 leaves slack without enabling exfil.
+// MAX_FLAG_BYTES is a hard cap. Legacy values like "super-compress" are
+// still accepted and normalized to "supra"; 64 leaves slack without exfil.
 const MAX_FLAG_BYTES = 64;
 
 function readFlag(flagPath) {
@@ -232,7 +238,7 @@ function readFlag(flagPath) {
       if (fd !== undefined) fs.closeSync(fd);
     }
 
-    const raw = out.trim().toLowerCase();
+    const raw = normalizeMode(out.trim());
     if (!VALID_MODES.includes(raw)) return null;
     return raw;
   } catch (e) {
@@ -322,4 +328,4 @@ function readHistory(filePath) {
   }
 }
 
-module.exports = { getDefaultMode, getConfigDir, getConfigPath, findRepoConfigPath, VALID_MODES, safeWriteFlag, readFlag, appendFlag, readHistory };
+module.exports = { getDefaultMode, getConfigDir, getConfigPath, findRepoConfigPath, VALID_MODES, normalizeMode, safeWriteFlag, readFlag, appendFlag, readHistory };

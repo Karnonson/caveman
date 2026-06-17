@@ -9,9 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/JuliusBrussee/caveman/stargazers"><img src="https://img.shields.io/github/stars/JuliusBrussee/caveman?style=flat&color=yellow" alt="Stars"></a>
-  <a href="https://github.com/JuliusBrussee/caveman/commits/main"><img src="https://img.shields.io/github/last-commit/JuliusBrussee/caveman?style=flat" alt="Last Commit"></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/JuliusBrussee/caveman?style=flat" alt="License"></a>
+  <a href="https://github.com/Karnonson/caveman/commits/main"><img src="https://img.shields.io/github/last-commit/Karnonson/caveman?style=flat" alt="Last Commit"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/Karnonson/caveman?style=flat" alt="License"></a>
 </p>
 
 <p align="center">
@@ -74,27 +73,11 @@ A [Claude Code](https://docs.anthropic.com/en/docs/claude-code) skill/plugin (al
 └─────────────────────────────────────┘
 ```
 
-Pick your level of grunt — `lite` (drop filler), `full` (default caveman), `ultra` (telegraphic), `super-compress` (extra-aggressive), or `silence` (minimum viable answer). One command switch. Cost go down forever.
+Pick your level of grunt — `lite` (drop filler), `full` (default caveman), `ultra` (telegraphic), `supra` (extra-aggressive), or `silence` (minimum viable answer). Legacy alias `super-compress` still works. One command switch. Cost go down forever.
 
 **Speak your tongue.** Caveman keep your language. You write Portuguese, caveman grunt Portuguese. Spanish, French, same. Compress the *style*, not the language. Code, command, error string stay exact.
 
 > "Novo ref de objeto cada render. Prop inline = novo ref = re-render. Envolva com `useMemo`."
-
-<table align="center">
-<tr><td>
-
-### <img src="docs/assets/dancing-rock.svg" width="22" height="22" alt="rock"/> Like this trick? Now get whole agent — **caveman-code**
-
-This skill shrink what agent **say**. **[caveman-code](https://github.com/JuliusBrussee/caveman-code)** shrink **everything** — full terminal coding agent, caveman top to bottom. **~2× fewer tokens than Codex** on identical tasks. 20+ providers · plan mode · autopilot goal loop · MIT.
-
-```bash
-npm install -g @juliusbrussee/caveman-code
-```
-
-[**▶ Try caveman-code now →**](https://github.com/JuliusBrussee/caveman-code) — *why use many token when whole agent save*
-
-</td></tr>
-</table>
 
 ## Install
 
@@ -102,10 +85,10 @@ One line. Find every agent. Install for each.
 
 ```bash
 # macOS / Linux / WSL / Git Bash
-curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Karnonson/caveman/main/install.sh | bash
 
 # Windows (PowerShell 5.1+)
-irm https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.ps1 | iex
+irm https://raw.githubusercontent.com/Karnonson/caveman/main/install.ps1 | iex
 ```
 
 ~30 seconds. Needs Node ≥18. Skip agent you no have. Safe to re-run.
@@ -119,7 +102,7 @@ Install break? Open agent, say *"Read CLAUDE.md and INSTALL.md, install caveman 
 
 | Skill | What |
 |---|---|
-| `/caveman [lite\|full\|ultra\|super-compress\|silence]` | Compress every reply. Levels stick until session end. |
+| `/caveman [lite\|full\|ultra\|supra\|silence]` | Compress every reply. Levels stick until session end. (`super-compress` accepted as legacy alias.) |
 | `/caveman-commit` | Conventional Commit messages, ≤50 char subject. Why over what. |
 | `/caveman-review` | One-line PR comments: `L42: 🔴 bug: user null. Add guard.` |
 | `/caveman-stats` | Real session token usage + lifetime savings + USD. Tweetable line via `--share`. |
@@ -187,10 +170,10 @@ Caveman teach lobster brevity — same canonical installer, scoped to one agent:
 
 ```bash
 # macOS / Linux / WSL
-curl -fsSL https://raw.githubusercontent.com/JuliusBrussee/caveman/main/install.sh | bash -s -- --only openclaw
+curl -fsSL https://raw.githubusercontent.com/Karnonson/caveman/main/install.sh | bash -s -- --only openclaw
 
 # Windows (PowerShell): no Node? install Node ≥18 first, then
-npx -y github:JuliusBrussee/caveman -- --only openclaw
+npx -y github:Karnonson/caveman -- --only openclaw
 ```
 
 Two thing happen, no more:
@@ -209,74 +192,13 @@ Custom workspace path? `OPENCLAW_WORKSPACE=/your/path` before the command. Unins
 
 Lobster claw still sharp. Lobster mouth now small. Brain still big.
 
-## Caveman Ecosystem
-
-Five tools. One philosophy: **agent do more with less**.
-
-| Repo | What |
-|------|------|
-| [**caveman**](https://github.com/JuliusBrussee/caveman) *(you here)* | Output compression — *why use many token when few do trick* |
-| [**caveman-code**](https://github.com/JuliusBrussee/caveman-code) | Whole terminal coding agent — *why use many token when whole agent can save* |
-| [**cavemem**](https://github.com/JuliusBrussee/cavemem) | Cross-agent memory — *why agent forget when agent can remember* |
-| [**cavekit**](https://github.com/JuliusBrussee/cavekit) | Spec-driven build loop — *why agent guess when agent can know* |
-| [**cavegemma**](https://github.com/JuliusBrussee/finetune-caveman) | Gemma 4 31B fine-tuned on caveman pairs — *why prompt every turn when weight remember* |
-
-Compose: cavekit drive build, caveman compress what agent *say*, cavemem compress what agent *remember*, cavegemma bake compression into weight, caveman-code ship it all as one terminal agent. One rock. Two rock. Three rock. Four rock. Five rock. That it.
-
-## More Skill From Same Cave
-
-Caveman has siblings. [**JuliusBrussee/skills**](https://github.com/JuliusBrussee/skills) — five skills, one install, works in Claude Code, Cursor, Gemini, Cline, Copilot, 40+ agents:
-
-| Skill | What |
-|------|------|
-| [**caveman**](https://github.com/JuliusBrussee/skills/tree/main/skills/caveman) | This one. Speak less, say more. |
-| [**grill-me**](https://github.com/JuliusBrussee/skills/tree/main/skills/grill-me) | Agent grill your plan *before* you build wrong thing. Checks how much you know first — no condescend, no coddle. |
-| [**interface-kit**](https://github.com/JuliusBrussee/skills/tree/main/skills/interface-kit) | Build UI that look good, load fast, work for everyone. |
-| [**junior-to-senior**](https://github.com/JuliusBrussee/skills/tree/main/skills/junior-to-senior) | Adversarial review pass. Junior output go in, senior output come out. |
-| [**loop-factory**](https://github.com/JuliusBrussee/skills/tree/main/skills/loop-factory) | Spec-driven task loop — inbox → active → archive, review gate between. |
-
-```bash
-npx skills@latest add JuliusBrussee/skills
-```
-
-One command. Five skill. Cave well stocked.
-
 ## Links
 
 - [INSTALL.md](./INSTALL.md) — full install matrix, all flags, per-agent detail
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — how to send patch
 - [CLAUDE.md](./CLAUDE.md) — maintainer guide (file ownership, hook architecture, CI)
 - [docs/](./docs/) — extra guides (Windows install, etc.)
-- [Issues](https://github.com/JuliusBrussee/caveman/issues) — bug, feature, weird behavior
-
-## Star This Repo
-
-Caveman save you token, save you money. Star cost zero. Fair trade. ⭐
-
-[![Star History Chart](https://api.star-history.com/svg?repos=JuliusBrussee/caveman&type=Date)](https://star-history.com/#JuliusBrussee/caveman&Date)
-
-## Also by Julius Brussee
-
-- **[Revu](https://github.com/JuliusBrussee/revu-swift)** — local-first macOS study app with FSRS spaced repetition. [revu.cards](https://revu.cards)
-
-## Sponsors
-
-caveman free forever. Sponsor keep rock sharp.
-
-<p align="center">
-  <a href="https://www.atlascloud.ai">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/atlas-cloud-dark.svg">
-      <img src="docs/assets/atlas-cloud.svg" alt="Atlas Cloud" height="28">
-    </picture>
-  </a>
-</p>
-
-<p align="center">
-  <a href="https://www.atlascloud.ai"><strong>Atlas Cloud</strong></a> — full-modal AI inference platform, one API.
-</p>
-
-Want rock here too? [Sponsor caveman](https://github.com/sponsors/JuliusBrussee).
+- [Issues](https://github.com/Karnonson/caveman/issues) — bug, feature, weird behavior
 
 ## License
 

@@ -23,9 +23,11 @@ MODE=$(printf '%s' "$MODE" | tr -cd 'a-z0-9-')
 
 # Whitelist. Anything else → render nothing rather than echo attacker bytes.
 case "$MODE" in
-  off|lite|full|ultra|super-compress|silence|commit|review|compress) ;;
+  off|lite|full|ultra|supra|super-compress|silence|commit|review|compress) ;;
   *) exit 0 ;;
 esac
+
+[ "$MODE" = "super-compress" ] && MODE="supra"
 
 if [ -z "$MODE" ] || [ "$MODE" = "full" ]; then
   printf '\033[38;5;172m[CAVEMAN]\033[0m'

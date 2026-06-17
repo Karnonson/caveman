@@ -17,7 +17,7 @@ Display this reference card when invoked. One-shot — do NOT change mode, write
 | **Lite** | `/caveman lite` | Drop filler. Keep sentence structure. |
 | **Full** | `/caveman full` | Drop articles, filler, pleasantries, hedging. Fragments OK. |
 | **Ultra** | `/caveman` or `/caveman ultra` | Extreme compression. Bare fragments. Tables over prose. Default. |
-| **Super-Compress** | `/caveman super-compress` | Extra-aggressive compression. Shortest safe answer. |
+| **Supra** | `/caveman supra` *(legacy: `/caveman super-compress`)* | Extra-aggressive compression. Shortest safe answer. |
 | **Silence** | `/caveman silence` | Minimum viable answer. One line if enough. |
 
 Mode stick until changed or session end.

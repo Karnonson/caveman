@@ -13,7 +13,7 @@ Five intensity levels:
 | `lite` | Drop filler/hedging. Sentences stay full. Professional but tight. |
 | `full` | Drop articles, fragments OK, short synonyms. |
 | `ultra` | Default. Bare fragments. Abbreviations (DB, auth, fn). Arrows for causality. |
-| `super-compress` | Aggressive compression. Symbol-first prose (`+`, `->`, `=`) when unambiguous. Shortest safe answer. |
+| `supra` | Aggressive compression. Symbol-first prose (`+`, `->`, `=`) when unambiguous. Shortest safe answer. |
 | `silence` | Minimum viable answer. Emit only blocker/question/safety/final result. One line if enough. |
 
 Auto-clarity rule: caveman drops to normal prose for security warnings, irreversible-action confirmations, multi-step sequences where fragment ambiguity risks misread, and when user repeats a question. Resumes after the clear part.
@@ -27,7 +27,8 @@ Internal validation rule (mode silence): final summary mandatory on 100% complet
 /caveman lite         # lighter compression
 /caveman full         # classic caveman compression
 /caveman ultra        # extreme compression
-/caveman super-compress # extra-aggressive compression
+/caveman supra        # extra-aggressive compression
+/caveman super-compress # legacy alias (still works)
 /caveman silence      # minimum viable answer
 stop caveman          # back to normal prose
 ```

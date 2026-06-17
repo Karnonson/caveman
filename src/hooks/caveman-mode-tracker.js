@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 const { execFileSync } = require('child_process');
-const { getDefaultMode, safeWriteFlag, readFlag, VALID_MODES } = require('./caveman-config');
+const { getDefaultMode, safeWriteFlag, readFlag, VALID_MODES, normalizeMode } = require('./caveman-config');
 
 // Modes handled by their own slash commands (/caveman-commit, etc.) — not
 // selectable via /caveman <arg>.
@@ -69,7 +69,7 @@ process.stdin.on('end', () => {
     if (prompt.startsWith('/caveman')) {
       const parts = prompt.split(/\s+/);
       const cmd = parts[0]; // /caveman, /caveman-commit, /caveman-review, etc.
-      const arg = parts[1] || '';
+      const arg = normalizeMode(parts[1] || '');
 
       let mode = null;
 

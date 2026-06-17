@@ -1,5 +1,5 @@
 ---
-description: Activate caveman compression mode (lite | full | ultra | super-compress | silence | off)
+description: Activate caveman compression mode (lite | full | ultra | supra | silence | off; super-compress alias supported)
 ---
 Activate caveman mode: $ARGUMENTS
 
