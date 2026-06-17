@@ -1457,6 +1457,25 @@ async function main() {
     if (picks && picks.length) opts.only = picks;
   }
 
+  // Guard: if still no agents selected after the TUI (or we're non-interactive / no TTY),
+  // exit with instructions rather than auto-installing every detected agent.
+  // The old "auto-install all detected" default is intentionally removed here — it
+  // silently clobbered agent configs when the dev machine happened to have VS Code
+  // extensions installed (issue #500-class). Require explicit selection.
+  if (opts.only.length === 0) {
+    const hadTty = !opts.nonInteractive && process.stdin.isTTY && process.stdout.isTTY;
+    if (hadTty) {
+      // User opened the TUI and confirmed with nothing selected — exit cleanly.
+      process.stdout.write('  no agents selected — nothing installed.\n');
+    } else {
+      // Non-interactive or no usable terminal: give instructions.
+      process.stdout.write('caveman: no agents selected.\n');
+      process.stdout.write('  pass --only <agent> to install for a specific agent (see --list for ids),\n');
+      process.stdout.write('  or run from an interactive terminal to use the chooser.\n');
+    }
+    return 0;
+  }
+
   const want = (id) => opts.only.length === 0 || opts.only.includes(id);
   const explicit = (id) => opts.only.includes(id);
 

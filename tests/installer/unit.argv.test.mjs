@@ -179,6 +179,16 @@ test('--all does NOT auto-enable mcp-shrink (no sensible default upstream)', () 
   assert.doesNotMatch(r.stdout, /wiring caveman-shrink MCP proxy/);
 });
 
+test('--only bypasses the interactive chooser TUI', () => {
+  // When --only is given, the installer must skip the chooser entirely — no TUI
+  // prompt text, no "no agents selected" exit message.
+  const r = run('--dry-run', '--only', 'claude', '--non-interactive');
+  assert.equal(r.status, 0);
+  assert.doesNotMatch(r.stdout, /Agent selection/i);
+  assert.doesNotMatch(r.stdout, /Use Up\/Down/i);
+  assert.doesNotMatch(r.stdout, /no agents selected/i);
+});
+
 test('--help discloses --config-dir scope', () => {
   const r = run('--help');
   assert.equal(r.status, 0);
