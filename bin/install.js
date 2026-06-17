@@ -256,6 +256,8 @@ const PROVIDERS = [
   { id: 'junie',      label: 'JetBrains Junie',     mech: 'npx skills add (junie)',        detect: 'jetbrains-plugin:junie', profile: 'junie', soft: true },
   { id: 'qoder',      label: 'Qoder',               mech: 'npx skills add (qoder)',        detect: 'dir:$HOME/.qoder', profile: 'qoder', soft: true },
   { id: 'antigravity',label: 'Google Antigravity',  mech: 'npx skills add (antigravity)',  detect: 'dir:$HOME/.gemini/antigravity', profile: 'antigravity', soft: true },
+  { id: 'antigravity-cli', label: 'Antigravity CLI', mech: 'npx skills add (antigravity-cli)', detect: 'dir:$HOME/.gemini/antigravity-cli', profile: 'antigravity-cli', soft: true },
+  { id: 'universal',  label: 'Generic .agents/skills', mech: 'npx skills add (universal)', detect: 'dir:$HOME/.agents', profile: 'universal', soft: true },
 ];
 
 // ── Detection ─────────────────────────────────────────────────────────────
@@ -1198,22 +1200,74 @@ function uninstall(ctx) {
   ok('per-repo init files (.cursor/, .windsurf/, AGENTS.md) — remove with your editor');
 }
 
-// ── Interactive prompt (TTY-only) ─────────────────────────────────────────
-async function promptForOnly(detected) {
+// ── Interactive mini TUI (TTY-only) ───────────────────────────────────────
+async function promptForOnly(providers, detectedIds) {
   if (!process.stdin.isTTY || !process.stdout.isTTY) return null;
-  if (detected.length === 0) return null;
-  process.stdout.write('\nDetected agents:\n');
-  detected.forEach((p, i) => process.stdout.write(`  [${i + 1}] ${p.label}\n`));
-  process.stdout.write('  [a] all   [q] quit\n');
+  if (!providers.length) return null;
+
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ans = await new Promise(res => rl.question('Install which? (default: all) ', res));
-  rl.close();
-  const t = (ans || '').trim().toLowerCase();
-  if (t === 'q') process.exit(0);
-  if (t === '' || t === 'a' || t === 'all') return null;
-  const picks = t.split(/[\s,]+/).map(s => parseInt(s, 10)).filter(n => n >= 1 && n <= detected.length);
-  if (picks.length === 0) return null;
-  return picks.map(n => detected[n - 1].id);
+  const ask = (q) => new Promise((res) => rl.question(q, res));
+
+  process.stdout.write('\nAgent selection (mini TUI)\n');
+  process.stdout.write('Pick target agents before installing skills.\n\n');
+  for (let i = 0; i < providers.length; i++) {
+    const p = providers[i];
+    const detectedTag = detectedIds.has(p.id) ? 'detected' : 'not-detected';
+    const softTag = p.soft ? 'soft' : 'auto';
+    process.stdout.write(`  [${String(i + 1).padStart(2, ' ')}] ${pad(p.id, 13)} ${pad(p.label, 24)} ${detectedTag}, ${softTag}\n`);
+  }
+  process.stdout.write('\n');
+  process.stdout.write('Shortcuts: d = detected, a = all, q = quit\n');
+  process.stdout.write('Input: numbers or agent ids separated by comma/space (ex: 1,4 or claude copilot)\n');
+
+  while (true) {
+    const ans = (await ask('Install for> ')).trim().toLowerCase();
+    if (ans === 'q' || ans === 'quit') {
+      rl.close();
+      process.exit(0);
+    }
+    if (ans === 'd' || ans === 'detected') {
+      rl.close();
+      return providers.filter(p => detectedIds.has(p.id)).map(p => p.id);
+    }
+    if (ans === 'a' || ans === 'all') {
+      rl.close();
+      return providers.map(p => p.id);
+    }
+
+    const toks = ans.split(/[\s,]+/).filter(Boolean);
+    if (!toks.length) {
+      process.stdout.write('  enter at least one choice.\n');
+      continue;
+    }
+
+    const picks = [];
+    const seen = new Set();
+    let bad = null;
+    for (const tok of toks) {
+      let id = null;
+      if (/^\d+$/.test(tok)) {
+        const n = Number(tok);
+        if (n >= 1 && n <= providers.length) id = providers[n - 1].id;
+      } else {
+        const m = providers.find(p => p.id === tok);
+        if (m) id = m.id;
+      }
+      if (!id) { bad = tok; break; }
+      if (!seen.has(id)) {
+        seen.add(id);
+        picks.push(id);
+      }
+    }
+
+    if (bad) {
+      process.stdout.write(`  unknown choice: ${bad}\n`);
+      continue;
+    }
+
+    rl.close();
+    return picks;
+  }
 }
 
 // ── --list ─────────────────────────────────────────────────────────────────
@@ -1249,7 +1303,8 @@ FLAGS
   --force               Re-run even if a target reports already installed.
   --only <agent>        Install only for the named agent. Repeatable.
                         See --list for valid ids.
-  --skip-skills         Don't run the npx-skills auto-detect fallback.
+  --skip-skills         Don't run the generic npx-skills fallback
+                        (.agents/skills via -a universal).
   --all                 Turn on hooks + init. (mcp-shrink needs an upstream;
                         pass --with-mcp-shrink="<cmd>" to add it.)
   --minimal             Just the plugin/extension install.
@@ -1316,11 +1371,12 @@ async function main() {
 
   // Detect everything once
   const detected = PROVIDERS.filter(p => detectMatch(p.detect));
+  const detectedIds = new Set(detected.map(p => p.id));
 
-  // TTY-only multi-select prompt when no --only and no --non-interactive.
+  // TTY-only mini TUI when no --only and no --non-interactive.
   if (opts.only.length === 0 && !opts.nonInteractive) {
-    const picks = await promptForOnly(detected);
-    if (picks) opts.only = picks;
+    const picks = await promptForOnly(PROVIDERS, detectedIds);
+    if (picks && picks.length) opts.only = picks;
   }
 
   const want = (id) => opts.only.length === 0 || opts.only.includes(id);
@@ -1346,14 +1402,14 @@ async function main() {
     if (prov.profile)           { installViaSkills(ctx, prov); continue; }
   }
 
-  // Auto-detect fallback if nothing matched
+  // Generic fallback if nothing matched: install to .agents/skills.
+  // This avoids npx-skills broad auto-detection writing into unrelated agent
+  // dirs (e.g. .continue/skills) when intent is ambiguous.
   if (!opts.skipSkills && opts.only.length === 0 && ctx.results.detected === 0) {
-    ctx.say('→ no known agents detected — running npx-skills auto-detect fallback');
-    // --yes --all for the same reason as installViaSkills above (issue #370):
-    // skip the interactive skill picker so curl|bash actually installs.
-    const r = runSpawn('npx', ['-y', 'skills', 'add', REPO, '--yes', '--all'], null, opts.dryRun);
-    if ((r.status || 0) === 0) ctx.results.installed.push('skills-auto');
-    else ctx.results.failed.push(['skills-auto', 'npx skills add (auto) failed']);
+    ctx.say('→ no known agents detected — installing generic .agents/skills profile (universal)');
+    const r = runSpawn('npx', ['-y', 'skills', 'add', REPO, '--skill', '*', '-a', 'universal', '--yes'], null, opts.dryRun);
+    if ((r.status || 0) === 0) ctx.results.installed.push('skills-universal');
+    else ctx.results.failed.push(['skills-universal', 'npx skills add (universal) failed']);
     process.stdout.write('\n');
   }
 

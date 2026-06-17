@@ -31,6 +31,8 @@ test('--list prints provider matrix', () => {
   assert.match(r.stdout, /claude\b/);
   assert.match(r.stdout, /gemini\b/);
   assert.match(r.stdout, /antigravity\b.*\(soft\)/);
+  assert.match(r.stdout, /antigravity-cli\b.*\(soft\)/);
+  assert.match(r.stdout, /universal\b.*\(soft\)/);
 });
 
 test('unknown flag exits 2 with error', () => {
@@ -80,6 +82,18 @@ test('--only known id passes argv validation', () => {
   // Dry-run + --only claude exits 0 even if the claude binary isn't on PATH.
   const r = run('--dry-run', '--only', 'claude', '--non-interactive', '--config-dir', '/tmp/__cm_only_test');
   assert.equal(r.status, 0);
+});
+
+test('--only antigravity-cli executes official profile install path', () => {
+  const r = run('--dry-run', '--only', 'antigravity-cli', '--non-interactive', '--config-dir', '/tmp/__cm_antigravity_cli_test');
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /would run: npx -y skills add Karnonson\/caveman --skill \* -a antigravity-cli --yes/);
+});
+
+test('--only universal executes generic .agents/skills install path', () => {
+  const r = run('--dry-run', '--only', 'universal', '--non-interactive', '--config-dir', '/tmp/__cm_universal_test');
+  assert.equal(r.status, 0);
+  assert.match(r.stdout, /would run: npx -y skills add Karnonson\/caveman --skill \* -a universal --yes/);
 });
 
 test('--config-dir expands ~ to home directory', async () => {
