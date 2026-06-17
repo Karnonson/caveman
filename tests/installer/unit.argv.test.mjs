@@ -90,10 +90,11 @@ test('--only antigravity-cli executes official profile install path', () => {
   assert.match(r.stdout, /would run: npx -y skills add Karnonson\/caveman --skill \* -a antigravity-cli --yes/);
 });
 
-test('--only universal executes generic .agents/skills install path', () => {
+test('--only universal executes direct generic .agents/skills install path', () => {
   const r = run('--dry-run', '--only', 'universal', '--non-interactive', '--config-dir', '/tmp/__cm_universal_test');
   assert.equal(r.status, 0);
-  assert.match(r.stdout, /would run: npx -y skills add Karnonson\/caveman --skill \* -a universal --yes/);
+  assert.match(r.stdout, /would copy 7 skill dirs into .*\/\.agents\/skills\//);
+  assert.doesNotMatch(r.stdout, /npx -y skills add/);
 });
 
 test('--config-dir expands ~ to home directory', async () => {

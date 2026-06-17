@@ -257,7 +257,7 @@ const PROVIDERS = [
   { id: 'qoder',      label: 'Qoder',               mech: 'npx skills add (qoder)',        detect: 'dir:$HOME/.qoder', profile: 'qoder', soft: true },
   { id: 'antigravity',label: 'Google Antigravity',  mech: 'npx skills add (antigravity)',  detect: 'dir:$HOME/.gemini/antigravity', profile: 'antigravity', soft: true },
   { id: 'antigravity-cli', label: 'Antigravity CLI', mech: 'npx skills add (antigravity-cli)', detect: 'dir:$HOME/.gemini/antigravity-cli', profile: 'antigravity-cli', soft: true },
-  { id: 'universal',  label: 'Generic .agents/skills', mech: 'npx skills add (universal)', detect: 'dir:$HOME/.agents', profile: 'universal', soft: true },
+  { id: 'universal',  label: 'Generic .agents/skills', mech: 'direct .agents/skills copy', detect: 'dir:$HOME/.agents', profile: 'universal', soft: true },
 ];
 
 // ── Detection ─────────────────────────────────────────────────────────────
@@ -568,7 +568,8 @@ function installViaSkills(ctx, prov) {
 // opencode.json with a "plugin" array entry. Mirrors the Claude Code hook
 // architecture as closely as opencode allows — only the statusline is missing
 // (opencode's TUI exposes no plugin-writable badge).
-const OPENCODE_SKILL_DIRS  = ['caveman', 'caveman-commit', 'caveman-review', 'caveman-help', 'caveman-stats', 'caveman-compress', 'cavecrew'];
+const UNIVERSAL_SKILL_DIRS = ['caveman', 'caveman-commit', 'caveman-review', 'caveman-help', 'caveman-stats', 'caveman-compress', 'cavecrew'];
+const OPENCODE_SKILL_DIRS  = UNIVERSAL_SKILL_DIRS;
 const OPENCODE_AGENT_FILES = ['cavecrew-investigator.md', 'cavecrew-builder.md', 'cavecrew-reviewer.md'];
 const OPENCODE_COMMAND_FILES = ['caveman.md', 'caveman-commit.md', 'caveman-review.md', 'caveman-compress.md', 'caveman-stats.md', 'caveman-help.md'];
 const OPENCODE_PLUGIN_REL = './plugins/caveman/plugin.js';
@@ -594,6 +595,36 @@ function copyDirRecursive(src, dest) {
     if (entry.isDirectory()) copyDirRecursive(s, d);
     else if (entry.isFile()) fs.copyFileSync(s, d);
   }
+}
+
+function installUniversal(ctx, banner = '→ Generic .agents/skills detected') {
+  const { say, note, warn, opts, repoRoot, results } = ctx;
+  results.detected++;
+  say(banner);
+
+  if (!repoRoot) {
+    warn('  generic .agents/skills install requires bundled skill sources.');
+    results.failed.push(['universal', 'bundled skill sources unavailable']);
+    process.stdout.write('\n');
+    return;
+  }
+
+  const skillsDir = path.join(process.cwd(), '.agents', 'skills');
+  if (opts.dryRun) {
+    note(`  would mkdir ${skillsDir}`);
+    note(`  would copy ${UNIVERSAL_SKILL_DIRS.length} skill dirs into ${skillsDir}/`);
+    results.installed.push('universal');
+    process.stdout.write('\n');
+    return;
+  }
+
+  fs.mkdirSync(skillsDir, { recursive: true });
+  for (const name of UNIVERSAL_SKILL_DIRS) {
+    copyDirRecursive(path.join(repoRoot, 'skills', name), path.join(skillsDir, name));
+    process.stdout.write(`  installed: ${path.join(skillsDir, name)}/\n`);
+  }
+  results.installed.push('universal');
+  process.stdout.write('\n');
 }
 
 function installOpencode(ctx) {
@@ -1350,8 +1381,8 @@ FLAGS
   --force               Re-run even if a target reports already installed.
   --only <agent>        Install only for the named agent. Repeatable.
                         See --list for valid ids.
-  --skip-skills         Don't run the generic npx-skills fallback
-                        (.agents/skills via -a universal).
+  --skip-skills         Don't run the generic .agents/skills fallback
+                        (direct copy into ./.agents/skills).
   --all                 Turn on hooks + init. (mcp-shrink needs an upstream;
                         pass --with-mcp-shrink="<cmd>" to add it.)
   --minimal             Just the plugin/extension install.
@@ -1442,22 +1473,19 @@ async function main() {
     // no repo clone is available; openclaw bails when the workspace dir is
     // missing without --force).
     if (!explicit(prov.id) && !detectMatch(prov.detect)) continue;
-    if (prov.id === 'claude')   { await installClaude(ctx); continue; }
-    if (prov.id === 'gemini')   { installGemini(ctx); continue; }
-    if (prov.id === 'opencode') { installOpencode(ctx); continue; }
-    if (prov.id === 'openclaw') { installOpenclaw(ctx); continue; }
-    if (prov.profile)           { installViaSkills(ctx, prov); continue; }
+    if (prov.id === 'claude')    { await installClaude(ctx); continue; }
+    if (prov.id === 'gemini')    { installGemini(ctx); continue; }
+    if (prov.id === 'opencode')  { installOpencode(ctx); continue; }
+    if (prov.id === 'openclaw')  { installOpenclaw(ctx); continue; }
+    if (prov.id === 'universal') { installUniversal(ctx); continue; }
+    if (prov.profile)            { installViaSkills(ctx, prov); continue; }
   }
 
-  // Generic fallback if nothing matched: install to .agents/skills.
-  // This avoids npx-skills broad auto-detection writing into unrelated agent
-  // dirs (e.g. .continue/skills) when intent is ambiguous.
+  // Generic fallback if nothing matched: copy the bundled skills into
+  // ./.agents/skills. This avoids broad auto-detection writing into unrelated
+  // agent dirs (e.g. .continue/skills) when intent is ambiguous.
   if (!opts.skipSkills && opts.only.length === 0 && ctx.results.detected === 0) {
-    ctx.say('→ no known agents detected — installing generic .agents/skills profile (universal)');
-    const r = runSpawn('npx', ['-y', 'skills', 'add', REPO, '--skill', '*', '-a', 'universal', '--yes'], null, opts.dryRun);
-    if ((r.status || 0) === 0) ctx.results.installed.push('skills-universal');
-    else ctx.results.failed.push(['skills-universal', 'npx skills add (universal) failed']);
-    process.stdout.write('\n');
+    installUniversal(ctx, '→ no known agents detected — installing generic .agents/skills profile (universal)');
   }
 
   // Per-repo init
