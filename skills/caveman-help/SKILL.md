@@ -15,8 +15,8 @@ Display this reference card when invoked. One-shot — do NOT change mode, write
 | Mode | Trigger | What change |
 |------|---------|-------------|
 | **Lite** | `/caveman lite` | Drop filler. Keep sentence structure. |
-| **Full** | `/caveman` | Drop articles, filler, pleasantries, hedging. Fragments OK. Default. |
-| **Ultra** | `/caveman ultra` | Extreme compression. Bare fragments. Tables over prose. |
+| **Full** | `/caveman full` | Drop articles, filler, pleasantries, hedging. Fragments OK. |
+| **Ultra** | `/caveman` or `/caveman ultra` | Extreme compression. Bare fragments. Tables over prose. Default. |
 | **Super-Compress** | `/caveman super-compress` | Extra-aggressive compression. Shortest safe answer. |
 | **Silence** | `/caveman silence` | Minimum viable answer. One line if enough. |
 
@@ -41,7 +41,7 @@ Keep user's language by default. User write Portuguese → reply Portuguese cave
 
 ## Configure Default Mode
 
-Default mode = `full`. Change it:
+Default mode = `ultra`. Change it:
 
 **Environment variable** (highest priority):
 ```bash
@@ -55,7 +55,7 @@ export CAVEMAN_DEFAULT_MODE=ultra
 
 Set `"off"` to disable auto-activation on session start. User can still activate manually with `/caveman`.
 
-Resolution: env var > config file > `full`.
+Resolution: env var > config file > `ultra`.
 
 ## More
 

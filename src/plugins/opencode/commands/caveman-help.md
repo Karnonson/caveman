@@ -5,7 +5,7 @@ Show the caveman quick-reference card.
 
 | Command | What |
 |---|---|
-| `/caveman` | Activate at default level (full) |
+| `/caveman` | Activate at default level (ultra) |
 | `/caveman lite` | Light compression — ~30% tokens dropped |
 | `/caveman ultra` | Maximum compression |
 | `/caveman super-compress` | Extra-aggressive compression |

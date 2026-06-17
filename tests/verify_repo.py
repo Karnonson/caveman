@@ -292,7 +292,7 @@ def verify_hook_install_flow() -> None:
         )
         ensure("CAVEMAN MODE ACTIVE" in activate.stdout, "activation output missing caveman banner")
         ensure("STATUSLINE SETUP NEEDED" not in activate.stdout, "activation should stay quiet when custom statusline exists")
-        ensure((claude_dir / ".caveman-active").read_text(encoding="utf-8") == "full", "activation flag should default to full")
+        ensure((claude_dir / ".caveman-active").read_text(encoding="utf-8") == "ultra", "activation flag should default to ultra")
 
         # Test configurable default mode via CAVEMAN_DEFAULT_MODE env var
         activate_custom = run(
@@ -325,8 +325,8 @@ def verify_hook_install_flow() -> None:
         )
         ensure(not (claude_dir / ".caveman-active").exists(), "/caveman with off default should not write flag")
 
-        # Reset back to full for subsequent tests
-        (claude_dir / ".caveman-active").write_text("full")
+        # Reset back to ultra for subsequent tests
+        (claude_dir / ".caveman-active").write_text("ultra")
 
         run(
             ["node", "src/hooks/caveman-mode-tracker.js"],

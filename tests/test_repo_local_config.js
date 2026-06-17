@@ -2,7 +2,7 @@
 // Tests for repo-local config resolution in getDefaultMode().
 // Covers the resolution-order contract:
 //   env CAVEMAN_DEFAULT_MODE → repo-local (.caveman/config.json or .caveman.json,
-//   walking up to filesystem root) → user config → 'full'.
+//   walking up to filesystem root) → user config → 'ultra'.
 //
 // Run: node tests/test_repo_local_config.js
 
@@ -45,9 +45,9 @@ function test(name, fn) {
 
 console.log('repo-local config resolution tests\n');
 
-test('returns "full" when no env, no repo config, no user config', (tmp) => {
+test('returns "ultra" when no env, no repo config, no user config', (tmp) => {
   process.chdir(tmp);
-  assert.strictEqual(getDefaultMode(), 'full');
+  assert.strictEqual(getDefaultMode(), 'ultra');
 });
 
 test('reads .caveman/config.json in cwd', (tmp) => {
@@ -127,14 +127,14 @@ test('invalid mode in repo config falls through to default', (tmp) => {
   fs.writeFileSync(path.join(tmp, '.caveman.json'),
     JSON.stringify({ defaultMode: 'definitely-not-a-mode' }));
   process.chdir(tmp);
-  assert.strictEqual(getDefaultMode(), 'full');
+  assert.strictEqual(getDefaultMode(), 'ultra');
 });
 
 test('malformed JSON in repo config falls through to default', (tmp) => {
   fs.mkdirSync(path.join(tmp, '.caveman'));
   fs.writeFileSync(path.join(tmp, '.caveman', 'config.json'), '{ not json');
   process.chdir(tmp);
-  assert.strictEqual(getDefaultMode(), 'full');
+  assert.strictEqual(getDefaultMode(), 'ultra');
 });
 
 test('refuses symlinked .caveman.json (symmetric with readFlag policy)', (tmp) => {
@@ -148,7 +148,7 @@ test('refuses symlinked .caveman.json (symmetric with readFlag policy)', (tmp) =
     return;
   }
   process.chdir(tmp);
-  assert.strictEqual(getDefaultMode(), 'full');
+  assert.strictEqual(getDefaultMode(), 'ultra');
 });
 
 test('findRepoConfigPath returns null outside any repo', (tmp) => {

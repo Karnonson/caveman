@@ -11,8 +11,8 @@ Five intensity levels:
 | Level | What change |
 |-------|-------------|
 | `lite` | Drop filler/hedging. Sentences stay full. Professional but tight. |
-| `full` | Default. Drop articles, fragments OK, short synonyms. |
-| `ultra` | Bare fragments. Abbreviations (DB, auth, fn). Arrows for causality. |
+| `full` | Drop articles, fragments OK, short synonyms. |
+| `ultra` | Default. Bare fragments. Abbreviations (DB, auth, fn). Arrows for causality. |
 | `super-compress` | Aggressive compression. Symbol-first prose (`+`, `->`, `=`) when unambiguous. Shortest safe answer. |
 | `silence` | Minimum viable answer. Emit only blocker/question/safety/final result. One line if enough. |
 
@@ -23,8 +23,9 @@ Internal validation rule (mode silence): final summary mandatory on 100% complet
 ## How to invoke
 
 ```
-/caveman              # full mode (default)
+/caveman              # ultra mode (default)
 /caveman lite         # lighter compression
+/caveman full         # classic caveman compression
 /caveman ultra        # extreme compression
 /caveman super-compress # extra-aggressive compression
 /caveman silence      # minimum viable answer
