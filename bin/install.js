@@ -1201,73 +1201,120 @@ function uninstall(ctx) {
 }
 
 // ── Interactive mini TUI (TTY-only) ───────────────────────────────────────
-async function promptForOnly(providers, detectedIds) {
+async function promptForOnly(providers, detectedIds, alreadySelected = new Set()) {
   if (!process.stdin.isTTY || !process.stdout.isTTY) return null;
   if (!providers.length) return null;
 
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  const ask = (q) => new Promise((res) => rl.question(q, res));
-
-  process.stdout.write('\nAgent selection (mini TUI)\n');
-  process.stdout.write('Pick target agents before installing skills.\n\n');
-  for (let i = 0; i < providers.length; i++) {
-    const p = providers[i];
-    const detectedTag = detectedIds.has(p.id) ? 'detected' : 'not-detected';
-    const softTag = p.soft ? 'soft' : 'auto';
-    process.stdout.write(`  [${String(i + 1).padStart(2, ' ')}] ${pad(p.id, 13)} ${pad(p.label, 24)} ${detectedTag}, ${softTag}\n`);
+  const wasRaw = !!process.stdin.isRaw;
+  const alreadySelectedSet = alreadySelected instanceof Set ? alreadySelected : new Set(alreadySelected || []);
+  const selected = new Set();
+  for (const p of providers) {
+    if (alreadySelectedSet.has(p.id) || (detectedIds.has(p.id) && !p.soft)) {
+      selected.add(p.id);
+    }
   }
-  process.stdout.write('\n');
-  process.stdout.write('Shortcuts: d = detected, a = all, q = quit\n');
-  process.stdout.write('Input: numbers or agent ids separated by comma/space (ex: 1,4 or claude copilot)\n');
 
-  while (true) {
-    const ans = (await ask('Install for> ')).trim().toLowerCase();
-    if (ans === 'q' || ans === 'quit') {
-      rl.close();
-      process.exit(0);
-    }
-    if (ans === 'd' || ans === 'detected') {
-      rl.close();
-      return providers.filter(p => detectedIds.has(p.id)).map(p => p.id);
-    }
-    if (ans === 'a' || ans === 'all') {
-      rl.close();
-      return providers.map(p => p.id);
+  let activeIndex = 0;
+  let linesWritten = 0;
+
+  function render() {
+    if (linesWritten > 0) {
+      process.stdout.write(`\x1b[${linesWritten}A\x1b[G`);
     }
 
-    const toks = ans.split(/[\s,]+/).filter(Boolean);
-    if (!toks.length) {
-      process.stdout.write('  enter at least one choice.\n');
-      continue;
-    }
+    let output = '';
+    output += '\n\x1b[1mAgent selection (interactive TUI)\x1b[22m\n';
+    output += '\x1b[2mUse Up/Down or j/k to navigate, Space to toggle, Enter to confirm, q/Ctrl+C to quit.\x1b[22m\n\n';
 
-    const picks = [];
-    const seen = new Set();
-    let bad = null;
-    for (const tok of toks) {
-      let id = null;
-      if (/^\d+$/.test(tok)) {
-        const n = Number(tok);
-        if (n >= 1 && n <= providers.length) id = providers[n - 1].id;
-      } else {
-        const m = providers.find(p => p.id === tok);
-        if (m) id = m.id;
-      }
-      if (!id) { bad = tok; break; }
-      if (!seen.has(id)) {
-        seen.add(id);
-        picks.push(id);
-      }
-    }
+    for (let i = 0; i < providers.length; i++) {
+      const p = providers[i];
+      const isSelected = selected.has(p.id);
+      const isCurrent = i === activeIndex;
 
-    if (bad) {
-      process.stdout.write(`  unknown choice: ${bad}\n`);
-      continue;
-    }
+      const checkbox = isSelected ? '[\x1b[32m✔\x1b[39m]' : '[ ]';
+      const cursorStr = isCurrent ? '\x1b[36m❯\x1b[39m' : ' ';
 
-    rl.close();
-    return picks;
+      const detectedTag = detectedIds.has(p.id) ? '\x1b[2mdetected\x1b[22m' : '\x1b[2mnot-detected\x1b[22m';
+      const softTag = p.soft ? '\x1b[2msoft\x1b[22m' : '\x1b[2mauto\x1b[22m';
+
+      const labelStr = isCurrent
+        ? `\x1b[36m${pad(p.id, 13)} ${pad(p.label, 24)}\x1b[39m`
+        : `${pad(p.id, 13)} ${pad(p.label, 24)}`;
+
+      output += ` ${cursorStr} ${checkbox} ${labelStr} (${detectedTag}, ${softTag})\n`;
+    }
+    output += '\n';
+
+    process.stdout.write(output);
+    linesWritten = output.split('\n').length - 1;
   }
+
+  // Hide cursor and clear any partial lines
+  process.stdout.write('\x1b[?25l');
+
+  if (typeof process.stdin.setRawMode === 'function') {
+    process.stdin.setRawMode(true);
+  }
+  process.stdin.resume();
+  readline.emitKeypressEvents(process.stdin);
+
+  render();
+
+  return new Promise((resolve) => {
+    function cleanup() {
+      process.stdout.write('\x1b[?25h');
+      if (typeof process.stdin.setRawMode === 'function') {
+        process.stdin.setRawMode(wasRaw);
+      }
+      process.stdin.removeListener('keypress', onKeypress);
+      process.stdin.pause();
+    }
+
+    function onKeypress(str, key) {
+      const keyName = key ? key.name : undefined;
+      const keyCtrl = key ? key.ctrl : false;
+
+      // Handle Ctrl+C
+      if (keyCtrl && keyName === 'c') {
+        cleanup();
+        process.exit(0);
+      }
+
+      // Handle q, Escape
+      if (str === 'q' || str === 'Q' || keyName === 'escape') {
+        cleanup();
+        process.exit(0);
+      }
+
+      // Navigation: Up, k
+      if (keyName === 'up' || str === 'k' || str === 'K') {
+        activeIndex = (activeIndex - 1 + providers.length) % providers.length;
+        render();
+      }
+      // Navigation: Down, j
+      else if (keyName === 'down' || str === 'j' || str === 'J') {
+        activeIndex = (activeIndex + 1) % providers.length;
+        render();
+      }
+      // Selection: Space
+      else if (str === ' ' || keyName === 'space') {
+        const p = providers[activeIndex];
+        if (selected.has(p.id)) {
+          selected.delete(p.id);
+        } else {
+          selected.add(p.id);
+        }
+        render();
+      }
+      // Confirmation: Enter
+      else if (keyName === 'return' || keyName === 'enter' || str === '\r' || str === '\n') {
+        cleanup();
+        resolve(Array.from(selected));
+      }
+    }
+
+    process.stdin.on('keypress', onKeypress);
+  });
 }
 
 // ── --list ─────────────────────────────────────────────────────────────────
