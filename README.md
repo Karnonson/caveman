@@ -114,9 +114,9 @@ Install break? Open agent, say *"Read CLAUDE.md and INSTALL.md, install caveman 
 | `caveman-shrink` | MCP middleware. Wraps any MCP server, compresses tool descriptions. [npm](https://www.npmjs.com/package/caveman-shrink). |
 | `cavecrew-*` | Caveman subagents (investigator/builder/reviewer). ~60% fewer tokens than vanilla, main context lasts longer. |
 
-**Statusline badge** — Claude Code shows `[CAVEMAN] ⛏ 12.4k` (lifetime tokens saved). Updates every `/caveman-stats` run. Set `CAVEMAN_STATUSLINE_SAVINGS=0` to silence.
+**Statusline badge** — Claude Code shows `[CAVEMAN:ULTRA] ⛏ 12.4k` when the default mode resolves to ultra (the fallback when no override exists). Updates every `/caveman-stats` run. Set `CAVEMAN_STATUSLINE_SAVINGS=0` to silence.
 
-Auto-activate every session: Claude Code, Codex, Gemini (built-in). Cursor / Windsurf / Cline / Copilot get always-on rule files via `--with-init`. Other agents trigger with `/caveman` per session. Full feature matrix in [INSTALL.md](./INSTALL.md#what-you-get).
+Auto-activate every session: Claude Code, Gemini (built-in), opencode, OpenClaw. Codex is per-session: use `/caveman` each time. Cursor / Windsurf / Cline / Copilot get always-on rule files via `--with-init` — those files are hardcoded to start the agent in `ultra`. Other agents trigger with `/caveman` per session. Full feature matrix in [INSTALL.md](./INSTALL.md#what-you-get).
 
 ## Benchmarks
 
@@ -160,7 +160,7 @@ A March 2026 paper ["Brevity Constraints Reverse Performance Hierarchies in Lang
 
 1. Install drop skill file in agent.
 2. Skill tell agent: drop filler, keep substance, use fragments.
-3. For Claude Code, hook also write tiny flag file each session — agent see flag, talk caveman from message one. No need say `/caveman`.
+3. For Claude Code, hook also write tiny flag file each session — agent see flag, start in your configured default mode (ultra when nothing overrides it), until you switch modes or say `normal mode`. No need say `/caveman`.
 4. Stats command read Claude Code session log, count tokens saved, write number to statusline.
 5. Caveman-compress sub-skill rewrite memory files (CLAUDE.md, project notes) so each session start with smaller context. Save tokens forever, not just one reply.
 

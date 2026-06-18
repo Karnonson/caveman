@@ -135,7 +135,7 @@ Useful flags:
 
 ## Always-on rules
 
-For agents without a hook system (Cursor, Windsurf, Cline, Copilot, and friends), the always-on path is a static rule file. Two ways:
+For agents without a hook system (Cursor, Windsurf, Cline, Copilot, and friends), the always-on path is a static rule file. Those rule files are hardcoded to start the agent in `ultra` — they don't read any configured default. Two ways:
 
 ```bash
 # Drop rule files into the current repo
@@ -168,12 +168,12 @@ Open Claude Code, type `/caveman`. Response should be terse fragments — "Got i
 
 ```bash
 cat "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.caveman-active"
-# expected output: ultra
+# expected output: your configured default (ultra when nothing overrides it)
 ```
 
 If it's missing or empty, the SessionStart hook didn't fire. See troubleshooting below.
 
-Statusline should show `[CAVEMAN:ULTRA]` (orange) at the bottom of Claude Code. After your first `/caveman-stats` run it appends a savings counter like `[CAVEMAN:ULTRA] ⛏ 12.4k`.
+Statusline shows `[CAVEMAN:<MODE>]` (orange) at the bottom of Claude Code — `[CAVEMAN:ULTRA]` when the default is ultra. After your first `/caveman-stats` run it appends a savings counter like `[CAVEMAN:ULTRA] ⛏ 12.4k`.
 
 ## Uninstall
 
@@ -211,7 +211,7 @@ Still broken? [Open an issue](https://github.com/Karnonson/caveman/issues).
 
 1. Run `node bin/install.js --list` — confirm `claude` is on the detected list. If not, `claude` isn't on `PATH`. Fix that first.
 2. Open `$CLAUDE_CONFIG_DIR/settings.json` (default `~/.claude/settings.json`) and look for `"hooks"` containing `caveman-activate.js` and `caveman-mode-tracker.js`. If missing, re-run with `--force`.
-3. Check `$CLAUDE_CONFIG_DIR/.caveman-active` exists with content `ultra`. If not, the SessionStart hook silent-failed — check `$CLAUDE_CONFIG_DIR/hooks/` for the JS files and try `node $CLAUDE_CONFIG_DIR/hooks/caveman-activate.js < /dev/null` to see if it errors.
+3. Check `$CLAUDE_CONFIG_DIR/.caveman-active` exists with your configured default (typically `ultra`). If not, the SessionStart hook silent-failed — check `$CLAUDE_CONFIG_DIR/hooks/` for the JS files and try `node $CLAUDE_CONFIG_DIR/hooks/caveman-activate.js < /dev/null` to see if it errors.
 4. Restart Claude Code. The SessionStart hook only fires on session start, not mid-session.
 
 **"Hooks failing on Windows."**

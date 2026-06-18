@@ -16,3 +16,4 @@ dist/*
 .github/agents/
 .github/skills/
 .github/copilot-*.md
+.worktrees/

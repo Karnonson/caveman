@@ -97,7 +97,7 @@ function loadBootstrapSnippet(repoRoot) {
     '',
     '  skills/caveman/SKILL.md',
     '',
-    'Default intensity: `full`. Switch with `/caveman lite|full|ultra|super-compress|silence`.',
+    'Default intensity: `ultra` (caveman installed in workspace). Switch with `/caveman lite|full|ultra|supra|silence` (legacy: `super-compress`).',
     'Stop with: "stop caveman" / "normal mode" / "deactivate caveman".',
     '',
     'Auto-Clarity: drop caveman for security warnings, irreversible action',
