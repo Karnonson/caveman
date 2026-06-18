@@ -135,7 +135,7 @@ Useful flags:
 
 ## Always-on rules
 
-For agents without a hook system (Cursor, Windsurf, Cline, Copilot, and friends), the always-on path is a static rule file. Those rule files tell the agent to start in `ultra` by default while caveman is installed, until you switch modes or say `normal mode`. Two ways:
+For agents without a hook system (Cursor, Windsurf, Cline, Copilot, and friends), the always-on path is a static rule file. Those rule files tell the agent to start in your configured default mode (ultra when nothing overrides it) while caveman is installed, until you switch modes or say `normal mode`. Two ways:
 
 ```bash
 # Drop rule files into the current repo
@@ -173,7 +173,7 @@ cat "${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.caveman-active"
 
 If it's missing or empty, the SessionStart hook didn't fire. See troubleshooting below.
 
-Statusline should show `[CAVEMAN:ULTRA]` (orange) at the bottom of Claude Code. After your first `/caveman-stats` run it appends a savings counter like `[CAVEMAN:ULTRA] ⛏ 12.4k`.
+Statusline should show `[CAVEMAN:ULTRA]` (orange) at the bottom of Claude Code when the default mode resolves to ultra. After your first `/caveman-stats` run it appends a savings counter like `[CAVEMAN:ULTRA] ⛏ 12.4k`.
 
 ## Uninstall
 
