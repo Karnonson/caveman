@@ -135,7 +135,7 @@ Useful flags:
 
 ## Always-on rules
 
-For agents without a hook system (Cursor, Windsurf, Cline, Copilot, and friends), the always-on path is a static rule file. Two ways:
+For agents without a hook system (Cursor, Windsurf, Cline, Copilot, and friends), the always-on path is a static rule file. Those rule files tell the agent to start in `ultra` by default while caveman is installed, until you switch modes or say `normal mode`. Two ways:
 
 ```bash
 # Drop rule files into the current repo

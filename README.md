@@ -116,7 +116,7 @@ Install break? Open agent, say *"Read CLAUDE.md and INSTALL.md, install caveman 
 
 **Statusline badge** — Claude Code shows `[CAVEMAN] ⛏ 12.4k` (lifetime tokens saved). Updates every `/caveman-stats` run. Set `CAVEMAN_STATUSLINE_SAVINGS=0` to silence.
 
-Auto-activate every session: Claude Code, Codex, Gemini (built-in). Cursor / Windsurf / Cline / Copilot get always-on rule files via `--with-init`. Other agents trigger with `/caveman` per session. Full feature matrix in [INSTALL.md](./INSTALL.md#what-you-get).
+Auto-activate every session: Claude Code, Codex, Gemini (built-in). Cursor / Windsurf / Cline / Copilot get always-on rule files via `--with-init`, so they start in `ultra` from message one while caveman is installed. Other agents trigger with `/caveman` per session. Full feature matrix in [INSTALL.md](./INSTALL.md#what-you-get).
 
 ## Benchmarks
 
@@ -160,7 +160,7 @@ A March 2026 paper ["Brevity Constraints Reverse Performance Hierarchies in Lang
 
 1. Install drop skill file in agent.
 2. Skill tell agent: drop filler, keep substance, use fragments.
-3. For Claude Code, hook also write tiny flag file each session — agent see flag, talk caveman from message one. No need say `/caveman`.
+3. For Claude Code, hook also write tiny flag file each session — agent see flag, start in `ultra` from message one while caveman is installed, until you switch modes or say `normal mode`. No need say `/caveman`.
 4. Stats command read Claude Code session log, count tokens saved, write number to statusline.
 5. Caveman-compress sub-skill rewrite memory files (CLAUDE.md, project notes) so each session start with smaller context. Save tokens forever, not just one reply.
 
